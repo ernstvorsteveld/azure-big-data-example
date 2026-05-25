@@ -8,7 +8,7 @@ properties:
     type: Public
     ports:
       - protocol: TCP
-        port: 443
+        port: 8443
   imageRegistryCredentials:
     - server: ACR_SERVER_PLACEHOLDER
       username: ACR_USER_PLACEHOLDER
@@ -22,14 +22,14 @@ properties:
             cpu: 0.5
             memoryInGB: 0.5
         ports:
-          - port: 443
+          - port: 8443
             protocol: TCP
         command:
           - nginx
           - -g
           - "daemon off;"
           - -c
-          - /etc/nginx-config/nginx.conf
+          - /etc/nginx-config/nginx_conf
         volumeMounts:
           - name: nginx-config-vol
             mountPath: /etc/nginx-config
@@ -48,9 +48,9 @@ properties:
   volumes:
     - name: nginx-config-vol
       secret:
-        nginx.conf: BASE64_NGINX_CONF
+        nginx_conf: BASE64_NGINX_CONF
     - name: certs-vol
       secret:
-        ca.pem: BASE64_CA_PEM
-        server-cert.pem: BASE64_SERVER_CERT
-        server-key.pem: BASE64_SERVER_KEY
+        ca_pem: BASE64_CA_PEM
+        server_cert_pem: BASE64_SERVER_CERT
+        server_key_pem: BASE64_SERVER_KEY

@@ -29,6 +29,17 @@ az login
 source deploy.sh
 ```
 
+## Certificate management
+
+```bash
+# Combine cert and key into a .p12 for macOS Keychain
+openssl pkcs12 -export \
+  -in certs/client-cert.pem \
+  -inkey certs/client-key.pem \
+  -out certs/client.p12 \
+  -passout pass:changeme
+```
+
 
 ## Test
 ```bash
@@ -39,5 +50,18 @@ export BIG_DATA_CLUSTER_IP=your-ip-address
 curl --cacert certs/ca.pem \
      --cert certs/client-cert.pem \
      --key certs/client-key.pem \
-     https://${BIG_DATA_CLUSTER_IP}
+     "https://spark.serverless.local:8443"
+```
+
+
+## Other commands
+
+```bash
+# Check container states
+az container show \
+  --resource-group spark-serverless-rg \
+  --name spark-serverless-group \
+  --query "containers[].{name:name, state:instanceView.currentState.state, restartCount:instanceView.restartCount}" \
+  -o table
+
 ```
