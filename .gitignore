@@ -1,0 +1,4 @@
+.docker.sh
+certs/
+aci-deployment.tmp.yaml
+nginx.local.conf
