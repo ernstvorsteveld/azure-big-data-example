@@ -1,0 +1,95 @@
+services:
+  spark-iceberg:
+    image: tabulario/spark-iceberg
+    container_name: spark-iceberg
+    hostname: spark-iceberg
+    extra_hosts:
+      - "spark-iceberg:127.0.0.1"
+    build: spark/
+    networks:
+      iceberg_net:
+    depends_on:
+      - rest
+      - minio
+    volumes:
+      - ./warehouse:/home/iceberg/warehouse
+      - ./notebooks:/home/iceberg/notebooks/notebooks
+    environment:
+      - AWS_ACCESS_KEY_ID=admin
+      - AWS_SECRET_ACCESS_KEY=password
+      - AWS_REGION=us-east-1
+      - SPARK_LOCAL_IP=127.0.0.1
+    ports:
+      - 8888:8888
+      - 8080:8080
+      - 10000:10000
+      - 10001:10001
+  rest:
+    image: apache/iceberg-rest-fixture
+    container_name: iceberg-rest
+    networks:
+      iceberg_net:
+    ports:
+      - 8181:8181
+    environment:
+      - AWS_ACCESS_KEY_ID=admin
+      - AWS_SECRET_ACCESS_KEY=password
+      - AWS_REGION=us-east-1
+      - CATALOG_WAREHOUSE=s3://warehouse/
+      - CATALOG_IO__IMPL=org.apache.iceberg.aws.s3.S3FileIO
+      - CATALOG_S3_ENDPOINT=http://minio:9000
+  minio:
+    image: minio/minio
+    container_name: minio
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=password
+      - MINIO_DOMAIN=minio
+    networks:
+      iceberg_net:
+        aliases:
+          - warehouse.minio
+          - minio
+    ports:
+      - 9001:9001
+      - 9000:9000
+    volumes:
+      - minio_data:/data
+    command: ["server", "/data", "--console-address", ":9001"]
+  mc:
+    depends_on:
+      - minio
+    image: minio/mc
+    container_name: mc
+    networks:
+      iceberg_net:
+    environment:
+      - AWS_ACCESS_KEY_ID=admin
+      - AWS_SECRET_ACCESS_KEY=password
+      - AWS_REGION=us-east-1
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set minio http://minio:9000 admin password) do echo '...waiting for minio...' && sleep 1; done;
+      if ! /usr/bin/mc ls minio/warehouse > /dev/null 2>&1; then
+        echo 'Bucket does not exist. Creating...';
+        /usr/bin/mc mb minio/warehouse;
+        /usr/bin/mc anonymous set public minio/warehouse;
+      else
+        echo 'Bucket already exists. Skipping creation.';
+      fi;
+      tail -f /dev/null
+      "
+  mermaid:
+    image: ernstvorsteveld/mermaid-live-editor:latest
+    volumes:
+      - ./src:/app/src
+    ports:
+      - 3000:8080
+      - 24678:24678
+networks:
+  iceberg_net:
+    driver: bridge
+
+volumes:
+  warehouse:
+  minio_data:
