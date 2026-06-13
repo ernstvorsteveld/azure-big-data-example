@@ -69,7 +69,7 @@ az container show \
 
 ## Docker compose
 
-For running apache spark/iceberg on localhost using docker, use docker compose file.
+For running apache spark/iceberg on localhost using docker, use docker compose file!
 
 ```bash
 docker compose up
